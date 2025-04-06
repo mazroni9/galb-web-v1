@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User, User as SelectUser } from "@shared/schema";
 
 declare global {
   namespace Express {
@@ -43,18 +43,30 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        return done(null, false, { message: "Invalid username or password" });
+      try {
+        const user = await storage.getUserByUsername(username);
+        if (!user) {
+          return done(null, false, { message: "Invalid username or password" });
+        }
+        
+        // Check if the password is hashed (contains a dot separator)
+        if (user.password.includes('.')) {
+          // Compare using the secure function
+          const isMatch = await comparePasswords(password, user.password);
+          if (!isMatch) {
+            return done(null, false, { message: "Invalid username or password" });
+          }
+        } else {
+          // For backward compatibility with non-hashed passwords
+          if (user.password !== password) {
+            return done(null, false, { message: "Invalid username or password" });
+          }
+        }
+        
+        return done(null, user);
+      } catch (error) {
+        return done(error);
       }
-      
-      // In our demo with in-memory storage, we're not hashing passwords
-      // In a real app, we would use the comparePasswords function
-      if (user.password !== password) {
-        return done(null, false, { message: "Invalid username or password" });
-      }
-      
-      return done(null, user);
     }),
   );
 
@@ -71,10 +83,13 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      // In a real app, we would hash the password
-      // req.body.password = await hashPassword(req.body.password);
+      // Hash the password for security
+      const hashedPassword = await hashPassword(req.body.password);
       
-      const user = await storage.createUser(req.body);
+      const user = await storage.createUser({
+        ...req.body,
+        password: hashedPassword
+      });
 
       req.login(user, (err) => {
         if (err) return next(err);
@@ -86,14 +101,14 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         return next(err);
       }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Authentication failed" });
       }
-      req.login(user, (err) => {
+      req.login(user, (err: any) => {
         if (err) {
           return next(err);
         }
@@ -103,7 +118,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
+    req.logout((err: any) => {
       if (err) return next(err);
       res.sendStatus(200);
     });
