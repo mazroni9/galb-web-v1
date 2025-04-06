@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { LoginData } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { X, SkipForward, ChevronRight, ChevronLeft } from "lucide-react";
+import { X, SkipForward, ChevronRight, ChevronLeft, Play, Pause, Volume2, VolumeX } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().min(3, { message: "اسم المستخدم يجب أن يكون 3 أحرف على الأقل" }),
@@ -150,6 +150,10 @@ export default function HeroSection({ loginOpen, onLoginClose }: HeroSectionProp
         videoUrl: defaultVideoUrl,
         duration: "00:10"
       };
+  
+  // For logging purposes
+  console.log("Featured videos:", featuredVideos);
+  console.log("Current video:", currentVideo);
 
   return (
     <div className="flex flex-col items-center justify-center py-8 relative">
@@ -243,8 +247,8 @@ export default function HeroSection({ loginOpen, onLoginClose }: HeroSectionProp
               className="absolute inset-0 w-full h-full object-cover"
               autoPlay
               muted={isMuted}
-              src={currentVideo.videoUrl}
-              key={currentVideo.videoUrl} // Force re-render on src change
+              src={currentVideo?.videoUrl || defaultVideoUrl}
+              key={currentVideo?.videoUrl || defaultVideoUrl} // Force re-render on src change
               onLoadedData={() => {
                 if (!isPaused) {
                   videoRef.current?.play().catch(e => console.error("Error auto-playing video:", e));
@@ -256,7 +260,7 @@ export default function HeroSection({ loginOpen, onLoginClose }: HeroSectionProp
             <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/70 to-transparent opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-between p-4">
               {/* Video Title */}
               <div className="self-end text-sm bg-[#0F172A]/80 px-3 py-1 rounded-full">
-                <span>{currentVideo.title}</span>
+                <span>{currentVideo?.title || "سيارات فاخرة"}</span>
               </div>
               
               {/* Video Controls */}
@@ -268,7 +272,7 @@ export default function HeroSection({ loginOpen, onLoginClose }: HeroSectionProp
                     className="rounded-full bg-[#0F172A]/80 hover:bg-[#3B82F6] h-10 w-10 border-none"
                     onClick={togglePlay}
                   >
-                    <i className={`fas ${isPaused ? 'fa-play' : 'fa-pause'}`}></i>
+                    {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                   </Button>
                   <Button
                     variant="outline"
@@ -276,7 +280,7 @@ export default function HeroSection({ loginOpen, onLoginClose }: HeroSectionProp
                     className="rounded-full bg-[#0F172A]/80 hover:bg-[#3B82F6] h-10 w-10 border-none"
                     onClick={toggleMute}
                   >
-                    <i className={`fas ${isMuted ? 'fa-volume-mute' : 'fa-volume-up'}`}></i>
+                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                   </Button>
                 </div>
                 
