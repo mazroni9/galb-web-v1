@@ -1,8 +1,47 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cors from 'cors';
 
 const app = express();
+
+// تكوين CORS للسماح فقط بالنطاقات المعتمدة
+const allowedOrigins = [
+  'https://app.qalb9.com', 
+  'https://qalb9.com', 
+  'http://localhost:5000'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // السماح للطلبات بدون أصل (مثل الاتصالات المحلية/الداخلية)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('غير مسموح بسبب سياسة CORS'));
+    }
+  },
+  credentials: true, // السماح بإرسال ملفات تعريف الارتباط مع الطلبات
+}));
+
+// إضافة رؤوس أمنية
+app.use((req, res, next) => {
+  // تعيين رؤوس أمنية لتحسين أمان التطبيق
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  
+  // تعيين نطاق الكوكيز على الدومين الصحيح في بيئة الإنتاج
+  if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1); // الثقة في بروكسي عكسي أمامي (مثل netlify)
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

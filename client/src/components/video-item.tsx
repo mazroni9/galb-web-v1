@@ -8,6 +8,22 @@ type VideoItemProps = {
 };
 
 export default function VideoItem({ video, onClick }: VideoItemProps) {
+  // تحديد ما إذا كنا في بيئة الإنتاج أم لا
+  const isProduction = import.meta.env.PROD;
+  // عنوان CDN للصور والفيديوهات في بيئة الإنتاج
+  const cdn = isProduction ? 'https://app.qalb9.com' : '';
+  
+  // الحصول على عنوان URL كامل للوسائط
+  const getMediaUrl = (url: string) => {
+    if (!url) return '';
+    // إذا كان الرابط يبدأ بـ http، فهذا يعني أنه رابط خارجي ويجب استخدامه كما هو
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // وإلا، نفترض أنه رابط محلي ونضيف CDN قبله
+    return `${cdn}${url}`;
+  };
+
   // Format date (e.g., "منذ 3 أيام")
   const formatUploadDate = (date: Date) => {
     try {
@@ -27,7 +43,7 @@ export default function VideoItem({ video, onClick }: VideoItemProps) {
     >
       <div className="relative h-44 overflow-hidden">
         <img
-          src={video.thumbnailUrl}
+          src={getMediaUrl(video.thumbnailUrl)}
           alt={video.title}
           className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
         />

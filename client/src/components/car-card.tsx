@@ -7,11 +7,26 @@ type CarCardProps = {
 };
 
 export default function CarCard({ car }: CarCardProps) {
+  // تحديد ما إذا كنا في بيئة الإنتاج أم لا
+  const isProduction = import.meta.env.PROD;
+  // عنوان CDN للصور في بيئة الإنتاج
+  const cdn = isProduction ? 'https://app.qalb9.com' : '';
+  
+  // الحصول على عنوان URL كامل للصور
+  const getImageUrl = (url: string) => {
+    if (!url) return '';
+    // إذا كان الرابط يبدأ بـ http، فهذا يعني أنه رابط خارجي ويجب استخدامه كما هو
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // وإلا، نفترض أنه رابط محلي ونضيف CDN قبله
+    return `${cdn}${url}`;
+  };
   return (
     <div className="bg-[#1E293B] rounded-lg overflow-hidden shadow-lg group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-[#334155]">
       <div className="relative h-48 overflow-hidden">
         <img
-          src={car.imageUrl}
+          src={getImageUrl(car.imageUrl)}
           alt={car.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

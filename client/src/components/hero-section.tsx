@@ -141,6 +141,21 @@ export default function HeroSection({ loginOpen, onLoginClose }: HeroSectionProp
     loginMutation.mutate(data);
   };
 
+  // تحديد ما إذا كنا في بيئة الإنتاج أم لا
+  const isProduction = import.meta.env.PROD;
+  // عنوان CDN للفيديوهات في بيئة الإنتاج (يمكن استبداله بـ app.qalb9.com إذا كنت ستستضيف الفيديوهات على نفس الخادم)
+  const cdn = isProduction ? 'https://app.qalb9.com' : '';
+  
+  // استخدام CDN للفيديوهات إذا كنا في بيئة الإنتاج
+  const getVideoUrl = (url: string) => {
+    // إذا كان الرابط يبدأ بـ http، فهذا يعني أنه رابط خارجي ويجب استخدامه كما هو
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // وإلا، نفترض أنه رابط محلي ونضيف CDN قبله
+    return `${cdn}${url}`;
+  };
+
   // Default video URL if no featured videos
   const defaultVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   const currentVideo = featuredVideos && featuredVideos.length > 0 
@@ -247,8 +262,8 @@ export default function HeroSection({ loginOpen, onLoginClose }: HeroSectionProp
               className="absolute inset-0 w-full h-full object-cover"
               autoPlay
               muted={isMuted}
-              src={currentVideo?.videoUrl || defaultVideoUrl}
-              key={currentVideo?.videoUrl || defaultVideoUrl} // Force re-render on src change
+              src={getVideoUrl(currentVideo?.videoUrl || defaultVideoUrl)}
+              key={getVideoUrl(currentVideo?.videoUrl || defaultVideoUrl)} // Force re-render on src change
               onLoadedData={() => {
                 if (!isPaused) {
                   videoRef.current?.play().catch(e => console.error("Error auto-playing video:", e));

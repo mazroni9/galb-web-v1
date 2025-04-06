@@ -29,14 +29,30 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // تحديد ما إذا كنا في بيئة الإنتاج أم لا
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // التكوين الأساسي لجلسة العمل
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "galb-super-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    // تكوين ملف تعريف الارتباط
+    cookie: {
+      httpOnly: true, // منع الوصول إلى ملف تعريف الارتباط من خلال JavaScript
+      secure: isProduction, // استخدام HTTPS فقط في بيئة الإنتاج
+      sameSite: isProduction ? 'strict' : 'lax', // الحماية من هجمات CSRF
+      maxAge: 1000 * 60 * 60 * 24 * 7, // صلاحية لمدة أسبوع
+    }
   };
 
-  app.set("trust proxy", 1);
+  // إضافة دومين الكوكي في بيئة الإنتاج
+  if (isProduction) {
+    sessionSettings.cookie!.domain = '.qalb9.com'; // سيطبق على app.qalb9.com وأي نطاق فرعي آخر
+  }
+
+  app.set("trust proxy", 1); // ضروري عند استخدام HTTPS خلف بروكسي عكسي
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());

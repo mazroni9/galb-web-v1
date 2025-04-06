@@ -6,7 +6,31 @@
   command = "npm run dev"
   port = 5000
 
+# إعادة توجيه كل الطلبات إلى index.html للتطبيق أحادي الصفحة
 [[redirects]]
   from = "/*"
   to = "/index.html"
+  status = 200
+
+# تكوين رؤوس HTTP الأمنية
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self' https://app.qalb9.com https://commondatastorage.googleapis.com https://*.unsplash.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://*.unsplash.com https://app.qalb9.com; connect-src 'self' https://app.qalb9.com;"
+
+# تكوين إعادة توجيه النطاق المخصص من الموقع العام إلى app.qalb9.com
+[[redirects]]
+  from = "https://qalb9.netlify.app/*"
+  to = "https://app.qalb9.com/:splat"
+  status = 301
+  force = true
+
+# توجيه API إلى الخادم الخلفي
+[[redirects]]
+  from = "/api/*"
+  to = "/api/:splat"
   status = 200
