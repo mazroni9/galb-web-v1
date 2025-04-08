@@ -1,4 +1,5 @@
 [build]
+  base = "."
   publish = "client/dist"
   command = "npm run build"
   functions = "netlify/functions"
@@ -10,7 +11,6 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["netlify/functions/**"]
 
 # إعادة توجيه كل الطلبات إلى index.html للتطبيق أحادي الصفحة
 [[redirects]]
@@ -18,17 +18,10 @@
   to = "/index.html"
   status = 200
 
-# توجيه API إلى الخادم الخلفي
+# توجيه API إلى الخادم الخلفي (Replit)
 [[redirects]]
   from = "/api/*"
-  to = "https://qalb-platform.replit.app/api/:splat"
-  status = 200
-  force = true
-
-# توجيه طلبات الوظائف بشكل صحيح
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
+  to = "https://qalb-platform.repl.co/api/:splat"
   status = 200
   force = true
 
@@ -40,4 +33,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' https://app.qalb9.com https://*.unsplash.com https://qalb-platform.replit.app; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://*.unsplash.com; connect-src 'self' https://qalb-platform.replit.app;"
+    Content-Security-Policy = "default-src 'self' https://app.qalb9.com https://*.unsplash.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://*.unsplash.com; connect-src 'self' https://qalb-platform.repl.co;"
