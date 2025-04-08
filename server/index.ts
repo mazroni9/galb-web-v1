@@ -9,34 +9,43 @@ const app = express();
 const allowedOrigins = [
   'https://app.qalb9.com', 
   'https://qalb9.com', 
-  'http://localhost:5000'
+  'http://localhost:5000',
+  'https://qalb-platform.replit.app'
 ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // السماح للطلبات بدون أصل (مثل الاتصالات المحلية/الداخلية)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('غير مسموح بسبب سياسة CORS'));
+// تبسيط تكوين CORS للسماح بأي مصدر في بيئة التطوير
+const corsOptions = process.env.NODE_ENV === 'production' 
+  ? {
+      origin: allowedOrigins,
+      credentials: true
     }
-  },
-  credentials: true, // السماح بإرسال ملفات تعريف الارتباط مع الطلبات
-}));
+  : {
+      origin: true, // السماح بأي مصدر في بيئة التطوير
+      credentials: true
+    };
+
+app.use(cors(corsOptions));
 
 // إضافة رؤوس أمنية
 app.use((req, res, next) => {
   // تعيين رؤوس أمنية لتحسين أمان التطبيق
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  
+  // السماح بعرض التطبيق في iframe في بيئة التطوير (لمعاينة Replit)
+  if (process.env.NODE_ENV === 'development') {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  } else {
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
   
   // تعيين نطاق الكوكيز على الدومين الصحيح في بيئة الإنتاج
   if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1); // الثقة في بروكسي عكسي أمامي (مثل netlify)
+  } else {
+    // دائمًا ثق في البروكسي في بيئة Replit
+    app.set('trust proxy', 1);
   }
   
   next();
